@@ -444,6 +444,27 @@ app.all('*', async (c) => {
   });
 });
 
+/**
+ * Scheduled handler for cron triggers.
+ * Keeps the gateway alive during active hours (controlled by wrangler.jsonc cron schedule).
+ */
+async function scheduled(
+  _event: ScheduledEvent,
+  env: MoltbotEnv,
+  _ctx: ExecutionContext,
+): Promise<void> {
+  const options = buildSandboxOptions(env);
+  const sandbox = getSandbox(env.Sandbox, 'moltbot', options);
+
+  try {
+    await ensureMoltbotGateway(sandbox, env);
+    console.log('[cron] Gateway keepalive OK');
+  } catch (err) {
+    console.error('[cron] Failed to start gateway:', err);
+  }
+}
+
 export default {
   fetch: app.fetch,
+  scheduled,
 };
