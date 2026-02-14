@@ -237,18 +237,30 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
 }
 
 // Discord configuration
-// Discord uses a nested dm object: dm.policy, dm.allowFrom (per DiscordDmConfig)
 if (process.env.DISCORD_BOT_TOKEN) {
-    const dmPolicy = process.env.DISCORD_DM_POLICY || 'pairing';
-    const dm = { policy: dmPolicy };
-    if (dmPolicy === 'open') {
-        dm.allowFrom = ['*'];
-    }
-    config.channels.discord = {
+    // Base config from env
+    let discordConfig = {
         token: process.env.DISCORD_BOT_TOKEN,
         enabled: true,
-        dm: dm,
+        dm: { policy: process.env.DISCORD_DM_POLICY || 'pairing' },
     };
+
+    // Merge custom config from DISCORD_CONFIG env var (JSON)
+    if (process.env.DISCORD_CONFIG) {
+        try {
+            const custom = JSON.parse(process.env.DISCORD_CONFIG);
+            discordConfig = { ...discordConfig, ...custom };
+            // Deep merge dm object
+            if (custom.dm) {
+                discordConfig.dm = { ...discordConfig.dm, ...custom.dm };
+            }
+            console.log('Discord custom config merged');
+        } catch (e) {
+            console.error('Failed to parse DISCORD_CONFIG:', e.message);
+        }
+    }
+
+    config.channels.discord = discordConfig;
 }
 
 // Slack configuration
