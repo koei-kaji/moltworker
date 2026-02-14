@@ -10,15 +10,29 @@ RUN ARCH="$(dpkg --print-architecture)" \
          arm64) NODE_ARCH="arm64" ;; \
          *) echo "Unsupported architecture: ${ARCH}" >&2; exit 1 ;; \
        esac \
-    && apt-get update && apt-get install -y xz-utils ca-certificates rclone \
+    && apt-get update && apt-get install -y xz-utils ca-certificates rclone tmux ripgrep \
     && curl -fsSLk https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz -o /tmp/node.tar.xz \
     && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 \
     && rm /tmp/node.tar.xz \
     && node --version \
     && npm --version
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install GitHub CLI
+RUN (type -p wget >/dev/null || (apt-get update && apt-get install -y wget)) \
+    && mkdir -p -m 755 /etc/apt/keyrings \
+    && out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+    && cat $out | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+    && chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+    && mkdir -p -m 755 /etc/apt/sources.list.d \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y gh
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+# Install pnpm, mcporter, clawhub globally
+RUN npm install -g pnpm mcporter clawhub
 
 # Install OpenClaw (formerly clawdbot/moltbot)
 # Pin to specific version for reproducible builds
