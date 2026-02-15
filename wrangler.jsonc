@@ -62,12 +62,12 @@
       "bucket_name": "moltbot-data",
     },
   ],
-  // Cron trigger to sync moltbot data to R2 every 5 minutes
+  // Cron trigger: JST 7:00-21:00 の間 Gateway を keepalive し、夜間はコンテナを停止させる
   "triggers": {
     "crons": [
       // default: "*/5 * * * *",
-      // JST 8:00-21:00 = UTC 23:00-12:00
-      "*/5 23 * * *",
+      // JST 7:00-21:00 = UTC 22:00-12:00
+      "*/5 22 * * *",
       "*/5 0-11 * * *",
     ],
   },

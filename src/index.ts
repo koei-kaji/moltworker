@@ -451,17 +451,24 @@ app.all('*', async (c) => {
 async function scheduled(
   _event: ScheduledEvent,
   env: MoltbotEnv,
-  _ctx: ExecutionContext,
+  ctx: ExecutionContext,
 ): Promise<void> {
   const options = buildSandboxOptions(env);
   const sandbox = getSandbox(env.Sandbox, 'moltbot', options);
 
-  try {
-    await ensureMoltbotGateway(sandbox, env);
-    console.log('[cron] Gateway keepalive OK');
-  } catch (err) {
-    console.error('[cron] Failed to start gateway:', err);
+  // 軽量な DO タッチ（listProcesses は高速）→ スリープタイマーをリセット
+  const existing = await findExistingMoltbotProcess(sandbox);
+  if (existing && existing.status === 'running') {
+    console.log('[cron] Gateway already running, keepalive OK');
+    return;
   }
+
+  // ゲートウェイ未起動の場合、waitUntil でバックグラウンド起動（ブロックしない）
+  ctx.waitUntil(
+    ensureMoltbotGateway(sandbox, env)
+      .then(() => console.log('[cron] Gateway started OK'))
+      .catch((err) => console.error('[cron] Failed to start gateway:', err)),
+  );
 }
 
 export default {
