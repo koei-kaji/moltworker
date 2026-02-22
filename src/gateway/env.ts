@@ -56,5 +56,12 @@ export function buildEnvVars(env: MoltbotEnv): Record<string, string> {
   if (env.R2_SECRET_ACCESS_KEY) envVars.R2_SECRET_ACCESS_KEY = env.R2_SECRET_ACCESS_KEY;
   if (env.R2_BUCKET_NAME) envVars.R2_BUCKET_NAME = env.R2_BUCKET_NAME;
 
+  // Access token
+  if (env.CF_ACCESS_CLIENT_ID) envVars.CF_ACCESS_CLIENT_ID = env.CF_ACCESS_CLIENT_ID;
+  if (env.CF_ACCESS_CLIENT_SECRET) envVars.CF_ACCESS_CLIENT_SECRET = env.CF_ACCESS_CLIENT_SECRET;
+
+  // Access token
+  if (env.GITHUB_PAT) envVars.GITHUB_PAT = env.GITHUB_PAT;
+
   return envVars;
 }
